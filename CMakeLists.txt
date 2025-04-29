@@ -45,7 +45,52 @@ target_compile_options(sha2 PRIVATE
     -march=native
     -funroll-loops
     -fno-math-errno
-)
+)  
+# Optionally enable Intel SHA Extensions (SHA-NI) implementation
+option(SHA2_ENABLE_SHAEXT "Enable Intel SHA Extensions (SHA-NI) implementation" ON)
+include(CheckCSourceCompiles)
+
+# Check if __SHA__ macro is defined by default
+check_c_source_compiles("\
+#ifdef __SHA__\
+int main(void) { return 0; }\
+#endif\
+" SHA2_HAS_SHA_NI)
+
+if(SHA2_ENABLE_SHAEXT)
+  if(NOT SHA2_HAS_SHA_NI)
+    if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+      message(STATUS "SHA2_ENABLE_SHAEXT=ON: adding -msha to compiler flags to enable SHA-NI")
+      target_compile_options(sha2 PRIVATE -msha)
+      # Re-check with -msha flag
+      set(CMAKE_REQUIRED_FLAGS "-msha")
+      check_c_source_compiles("\
+#ifdef __SHA__\
+int main(void) { return 0; }\
+#endif\
+" SHA2_HAS_SHA_NI)
+      unset(CMAKE_REQUIRED_FLAGS)
+      if(NOT SHA2_HAS_SHA_NI)
+        message(WARNING "Compiler does not support SHA Extensions (-msha) or __SHA__ still not defined; Intel SHA-NI unavailable")
+      endif()
+    else()
+      message(WARNING "SHA2_ENABLE_SHAEXT=ON, but compiler ${CMAKE_C_COMPILER_ID} may not support -msha; Intel SHA-NI unavailable")
+    endif()
+  else()
+    message(STATUS "Intel SHA Extensions available: __SHA__ is defined by default")
+    if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+      message(STATUS "Adding -msha to compiler flags to ensure __SHA__ is defined")
+      target_compile_options(sha2 PRIVATE -msha)
+    endif()
+  endif()
+else()
+  message(STATUS "Intel SHA Extensions disabled by SHA2_ENABLE_SHAEXT option")
+endif()
+
+# Warn if __SHA__ is not defined
+if(NOT SHA2_HAS_SHA_NI)
+  message(STATUS "Intel SHA Extensions not detected: pass -msha or enable SHA2_ENABLE_SHAEXT to enable SHA-NI optimizations")
+endif()
 
 # Optionally enable Link-Time Optimization (LTO) if supported
 option(SHA2_ENABLE_LTO "Enable link-time optimization" ON)

@@ -27,6 +27,22 @@ This library is specifically designed to work with the sumcheck protocol by prov
 
 ## Building and Installation
 
+### Compiler Flags
+
+To enable the Intel SHA Extension (SHA-NI) implementation, you must compile with `-msha` (or `-march=…+sha`) so that the `__SHA__` macro is defined. For example:
+
+```bash
+cmake -B build -S . -DCMAKE_C_FLAGS="-msha"
+```
+
+Alternatively, use the CMake option:
+
+```bash
+cmake -B build -S . -DSHA2_ENABLE_SHAEXT=ON
+```
+
+The build system will automatically add the necessary compiler flags to enable the SHA-NI accelerated path.
+
 The SHA2 library uses CMake for building:
 
 ```bash
