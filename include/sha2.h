@@ -17,11 +17,9 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/** Hash function types supported by this library */
+ #ifdef __cplusplus
+ extern "C" {
+ #endif
 typedef enum {
     SHA2_224 = 0,   /**< SHA-224 hash function */
     SHA2_256 = 1,   /**< SHA-256 hash function */
@@ -292,6 +290,44 @@ int sha2_hash_many(sha2_hash_type type,
                    size_t msg_len,
                    void *digests,
                    size_t n);
+/**
+ * Convenience wrappers for high-throughput hashing of fixed-length messages.
+ * These call sha2_hash_many under the hood, dispatching hardware-accelerated
+ * or scalar paths automatically.
+ */
+/**
+ * sha256_hash_many - Compute N SHA-256 hashes of messages of length msg_len.
+ * @data: pointer to input messages, contiguous, each msg_len bytes
+ * @msg_len: length of each message in bytes
+ * @digests: output buffer, size N * SHA256_DIGEST_SIZE
+ * @n: number of messages
+ * Returns 0 on success, -1 on error.
+ */
+static inline int sha256_hash_many(const void *data, size_t msg_len,
+                                   void *digests, size_t n) {
+    return sha2_hash_many(SHA2_256, data, msg_len, digests, n);
+}
+/**
+ * sha224_hash_many - Compute N SHA-224 hashes of messages of length msg_len.
+ */
+static inline int sha224_hash_many(const void *data, size_t msg_len,
+                                   void *digests, size_t n) {
+    return sha2_hash_many(SHA2_224, data, msg_len, digests, n);
+}
+/**
+ * sha384_hash_many - Compute N SHA-384 hashes of messages of length msg_len.
+ */
+static inline int sha384_hash_many(const void *data, size_t msg_len,
+                                   void *digests, size_t n) {
+    return sha2_hash_many(SHA2_384, data, msg_len, digests, n);
+}
+/**
+ * sha512_hash_many - Compute N SHA-512 hashes of messages of length msg_len.
+ */
+static inline int sha512_hash_many(const void *data, size_t msg_len,
+                                   void *digests, size_t n) {
+    return sha2_hash_many(SHA2_512, data, msg_len, digests, n);
+}
 #ifdef __cplusplus
 }
 #endif

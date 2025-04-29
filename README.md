@@ -3,9 +3,13 @@
 ## Quick Full-Core Benchmark
 To immediately build and run the full-core small-message saturation benchmark:
 ```bash
-cmake -B build -S . -DCMAKE_BUILD_TYPE=Release && \
-cmake --build build -- -j && \
-build/bin/sha2_benchmark_many [msg_len [msgs_per_thread]]
+# Clone, configure, and build (with SHA-NI & examples)
+cmake -B build -S . \
+      -DCMAKE_BUILD_TYPE=Release \
+      -DSHA2_ENABLE_SHAEXT=ON \
+      -DSHA2_BUILD_EXAMPLES=ON
+cmake --build build -- -j
+build/bin/sha2_benchmark_many
 ```
 
 An implementation of the SHA-2 family of hash functions (SHA-224, SHA-256, SHA-384, SHA-512), specifically designed to be compatible with the sumcheck protocol for Fiat-Shamir transformations.
@@ -23,7 +27,7 @@ An implementation of the SHA-2 family of hash functions (SHA-224, SHA-256, SHA-3
   - SHA-NI single-block (~68M hashes/s, ~19.7 cycles/hash)
   - AVX2 4-way multi-buffer (~68M hashes/s, ~1.5 cycles/hash)
   - AVX-512 8-way multi-buffer (~68M hashes/s, ~0.27 cycles/hash)
-- Optional Link-Time Optimization (LTO) support for further inlining and performance
+   - Optional Link-Time Optimization (LTO) support for further inlining and performance
 
 ## Integration with Sumcheck Protocol
 
@@ -58,6 +62,39 @@ The SHA2 library uses CMake for building:
 # Initial native build (Clang, runtime dispatch for SHA-NI, AVX2, AVX-512)
 cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
 cmake --build build -- -j
+
+## High-Throughput Parallel Hashing API
+
+Once built, the library provides a simple API for hashing many small, fixed-length messages at maximum throughput.
+Use the `sha256_hash_many` (and similar) convenience wrappers:
+```c
+#include <sha2.h>
+#include <stdlib.h>
+
+// Number of messages to hash
+size_t N = 1000000;
+// Length of each message (must be <= SHA256_BLOCK_SIZE == 64)
+size_t msg_len = 50;
+
+// Allocate and fill input messages (N * msg_len bytes)
+uint8_t *messages = malloc(N * msg_len);
+// ... fill messages[i * msg_len + j] ...
+
+// Allocate output buffer (N * SHA256_DIGEST_SIZE bytes)
+uint8_t *digests = malloc(N * SHA256_DIGEST_SIZE);
+
+// Hash all messages in parallel on all cores, using SHA-NI when available
+if (sha256_hash_many(messages, msg_len, digests, N) != 0) {
+    // error handling
+}
+
+// Each digest is 32 bytes: digests[0..31] is hash of messages[0..49], etc.
+```
+
+This call automatically:
+- Pads each message in-place to a full 512-bit block
+- Dispatches to the fastest code path available (SHA-NI, AVX2/AVX-512, or scalar)
+ - Uses one thread per logical core to compute N hashes concurrently
 
 # Optional: enable Link-Time Optimization (LTO)
 cmake -B build -S . -DCMAKE_BUILD_TYPE=Release \

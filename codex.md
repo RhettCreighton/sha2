@@ -32,14 +32,17 @@ the library delivers both broad compatibility and world-class throughput for div
      ```
    - For release/benchmark:
      ```bash
-     # Wipe and recreate a single build directory
-     rm -rf build build_*        # remove any stale builds
-     cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
+     # Wipe and recreate build directory, enable SHA-NI and examples
+     rm -rf build build_*
+     cmake -B build -S . \
+           -DCMAKE_BUILD_TYPE=Release \
+           -DSHA2_ENABLE_SHAEXT=ON \
+           -DSHA2_BUILD_EXAMPLES=ON
      cmake --build build -- -j
      ```
      ```bash
      # Run the full-core small-message saturation benchmark
-     build/bin/sha2_benchmark_many    # one-build, one-run for peak MH/s
+     build/bin/sha2_benchmark_many    # prints ~375 MH/s total on 16 cores
      ```
 
 3. Coding Guidelines
@@ -57,7 +60,7 @@ the library delivers both broad compatibility and world-class throughput for div
    - Runtime dispatch is managed by `__builtin_cpu_supports` checks.
 
 5. Benchmarks Summary
-   - Many small messages (e.g., 55 B) via `sha2_benchmark_many`: ~385M H/s total on 16 cores
+   - Many small messages (e.g., 55 B) via `sha2_benchmark_many`: ~375M H/s total on 16 cores
 
 6. Integration Options
    - Git submodule, CMake FetchContent, or `find_package(sha2)` after installation.
@@ -67,6 +70,20 @@ Clean up temporary build artifacts before committing:
 ```bash
 # Remove all build artifacts and untracked files (use with care)
 git clean -fdx
+```
+
+## One-Minute SHA-NI Benchmark
+
+To reproduce the full-core SHA-256 throughput in under a minute:
+```bash
+git clone https://github.com/your-org/sha2.git
+cd sha2
+cmake -B build -S . \
+      -DCMAKE_BUILD_TYPE=Release \
+      -DSHA2_ENABLE_SHAEXT=ON \
+      -DSHA2_BUILD_EXAMPLES=ON
+cmake --build build -- -j
+build/bin/sha2_benchmark_many    # ~375 MH/s on 16 cores
 ```
 ## Public API: sha2_hash_many
 The `sha2_hash_many` function provides a simple high-performance interface to compute `n` SHA-256 hashes of uniform-length messages:

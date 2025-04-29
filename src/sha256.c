@@ -5,9 +5,10 @@
 #include "sha2.h"
 #include <stdbool.h>
 
-/* Wrapper: dispatch to SHA-NI accelerated or scalar block processor */
+#if defined(__SHA__)
 #include "sha256_shaext.h"
 extern void sha256_process_block_shaext(sha2_ctx *ctx, const uint8_t *block);
+#endif
 #include <stdbool.h>
 #include <string.h>
 
@@ -27,8 +28,7 @@ static const uint32_t SHA224_H0[8] = {
  * SHA-256 implementation based on FIPS PUB 180-4
  */
 
-/* Scalar SHA-256 definitions (only when SHA-NI not available) */
-#if !defined(__SHA__)
+/* Scalar SHA-256 definitions */
 /* SHA-256 constants K */
 static const uint32_t K[64] = {
     0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
@@ -47,6 +47,24 @@ static const uint32_t K[64] = {
 static inline uint32_t rotr(uint32_t x, int n) {
     return (x >> n) | (x << (32 - n));
 }
+// ----------------------------------------------------------------------------
+// Compile-time dispatch: SHA-NI accelerated vs. scalar fallback
+// ----------------------------------------------------------------------------
+#if defined(__SHA__)
+/**
+ * sha256_process_block - hardware-accelerated SHA-NI single-block transform
+ */
+static void sha256_process_block(sha2_ctx *ctx, const uint8_t *block) {
+    sha256_process_block_shaext(ctx, block);
+}
+#else
+/**
+ * sha256_process_block - pure-C scalar fallback for one block
+ */
+static void sha256_process_block(sha2_ctx *ctx, const uint8_t *block) {
+    sha256_process_block_scalar(ctx, block);
+}
+#endif
 
 
 /* SHA-256 functions */
@@ -74,10 +92,9 @@ static inline uint32_t gamma1(uint32_t x) {
     return rotr(x, 17) ^ rotr(x, 19) ^ (x >> 10);
 }
 
-/* Process a single block (512 bits) of data */
-/* Use runtime-dispatching wrapper for SHA-NI vs. scalar */
-extern void sha256_process_block_shaext(sha2_ctx *ctx, const uint8_t *block);
-void sha256_process_block(sha2_ctx *ctx, const uint8_t *block) {
+/* Scalar block processing: fallback when SHA-NI unsupported */
+/* Scalar single-block compression fallback */
+static __attribute__((unused)) void sha256_process_block_scalar(sha2_ctx *ctx, const uint8_t *block) {
     uint32_t a, b, c, d, e, f, g, h;
     uint32_t w[64];
     uint32_t t1, t2;
@@ -145,7 +162,6 @@ void sha256_process_block(sha2_ctx *ctx, const uint8_t *block) {
     ctx->u.sha256.state[6] += g;
     ctx->u.sha256.state[7] += h;
 }
-#endif // !__SHA__
 
 /* Initialize SHA-256 context */
 int sha256_init(void *context) {
@@ -211,7 +227,7 @@ int sha256_update(void *context, const void *data, size_t len) {
         
         /* Fill the buffer and process it */
         memcpy(ctx->u.sha256.buffer + buffer_pos, input, space_left);
-        sha256_process_block_shaext(ctx, ctx->u.sha256.buffer);
+        sha256_process_block(ctx, ctx->u.sha256.buffer);
         
         /* Move to the next block of data */
         input += space_left;
@@ -220,7 +236,7 @@ int sha256_update(void *context, const void *data, size_t len) {
     
     /* Process as many complete blocks as possible */
     while (len >= 64) {
-        sha256_process_block_shaext(ctx, input);
+        sha256_process_block(ctx, input);
         input += 64;
         len -= 64;
     }
@@ -255,7 +271,7 @@ int sha256_final(void *context, void *digest, size_t digest_size) {
     if (buffer_pos > 56) {
         /* Pad with zeros to complete the block */
         memset(ctx->u.sha256.buffer + buffer_pos, 0, 64 - buffer_pos);
-        sha256_process_block_shaext(ctx, ctx->u.sha256.buffer);
+        sha256_process_block(ctx, ctx->u.sha256.buffer);
         buffer_pos = 0;
     }
     
@@ -274,7 +290,7 @@ int sha256_final(void *context, void *digest, size_t digest_size) {
     ctx->u.sha256.buffer[63] = (uint8_t)bit_len;
     
     /* Process the final block */
-    sha256_process_block_shaext(ctx, ctx->u.sha256.buffer);
+    sha256_process_block(ctx, ctx->u.sha256.buffer);
     
     /* Copy the hash value to the output buffer (big-endian) */
     for (i = 0; i < 8; i++) {
