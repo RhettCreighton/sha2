@@ -141,6 +141,8 @@ void sha512_process4_avx2(
     state0[6]+=out[0]; state1[6]+=out[1]; state2[6]+=out[2]; state3[6]+=out[3];
     _mm256_storeu_si256((__m256i*)out, h);
     state0[7]+=out[0]; state1[7]+=out[1]; state2[7]+=out[2]; state3[7]+=out[3];
+}
+
 #else
 // When AVX2 not available, provide non-empty translation unit
 typedef int sha512_avx2_not_supported;

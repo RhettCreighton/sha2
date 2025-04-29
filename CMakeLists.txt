@@ -7,6 +7,7 @@ if(NOT DEFINED CMAKE_C_COMPILER OR CMAKE_C_COMPILER STREQUAL "")
   endif()
 endif()
 project(sha2 VERSION 1.1.0 LANGUAGES C ASM)
+find_package(Threads REQUIRED)
 
 # Global optimization flags (enable AVX2 macros for examples)
 add_compile_options(-O3 -march=native -funroll-loops)
@@ -181,17 +182,22 @@ if(SHA2_BUILD_EXAMPLES)
     add_executable(sha2_fiat_shamir_example examples/fiat_shamir_example.c)
     target_link_libraries(sha2_fiat_shamir_example sha2)
     
-    # Benchmark: measure SHA-256 hashes per second
-    add_executable(sha2_benchmark examples/sha2_benchmark.c)
-    target_link_libraries(sha2_benchmark sha2)
+    # Benchmark: (deprecated) measure SHA-256 hashes per second
+    # (Use sha2_benchmark_mt for multi-threaded SHA-NI benchmark.)
+    #add_executable(sha2_benchmark examples/sha2_benchmark.c)
+    #target_link_libraries(sha2_benchmark sha2)
     # Benchmark: measure SHA-512 hashes per second
     add_executable(sha2_benchmark512 examples/sha2_benchmark512.c)
     target_link_libraries(sha2_benchmark512 sha2)
     
     # Copy executables to bin/
     set_target_properties(
-        sha2_hash_example sha2_fiat_shamir_example sha2_benchmark sha2_benchmark512
+        sha2_hash_example sha2_fiat_shamir_example sha2_benchmark512
         PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
     )
+    # Build multi-threaded SHA-NI benchmark
+    add_executable(sha2_benchmark_mt examples/sha2_benchmark_mt.c)
+    target_link_libraries(sha2_benchmark_mt PRIVATE sha2 Threads::Threads)
+    set_target_properties(sha2_benchmark_mt PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 endif()

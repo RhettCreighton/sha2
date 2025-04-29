@@ -34,7 +34,10 @@ the library delivers both broad compatibility and world-class throughput for div
      ```bash
      cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
      cmake --build build -- -j
-     build/bin/sha2_benchmark
+     # Single-threaded benchmarks:
+     build/bin/sha2_benchmark         # time-based API, SHA-NI single-block, AVX2, AVX-512
+     # Full-core SHA-NI saturation benchmark (use all cores):
+     build/bin/sha2_benchmark_mt      # multi-threaded SHA-NI multi-block
      ```
 
 3. Coding Guidelines
@@ -54,9 +57,11 @@ the library delivers both broad compatibility and world-class throughput for div
 5. Benchmarks Summary
    - AMD Ryzen 7 PRO 8840U (1-second run, 64-byte blocks):
      * Scalar fallback: ~2.9M H/s
-     * SHA-NI: ~68M H/s
-     * AVX2-4way: ~68M H/s
-     * AVX512-8way: ~68M H/s
+     * SHA-NI single-block: ~25M H/s (≈99 cycles/hash)
+     * SHA-NI multi-block (batch 256): ~37M H/s (≈89 cycles/hash)
+     * AVX2-4way: ~16M H/s (≈186 cycles/hash)
+     * AVX512-8way: ~21M H/s (≈144 cycles/hash)
+     * Multi-threaded SHA-NI (one thread per core, batch 256): ~37M × #cores H/s (e.g., ~376M H/s on 16 cores)
 
 6. Integration Options
    - Git submodule, CMake FetchContent, or `find_package(sha2)` after installation.

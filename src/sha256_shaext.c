@@ -12,9 +12,6 @@ extern void sha256_process_block(sha2_ctx *ctx, const uint8_t *block);
 extern void sha256_ni_transform(uint32_t *digest, const void *data, uint64_t numBlocks);
 
 void sha256_process_block_shaext(sha2_ctx *ctx, const uint8_t *block) {
-#ifdef __SHA__
+    // Always invoke the SHA-NI accelerated transform for single-block processing
     sha256_ni_transform(ctx->u.sha256.state, block, 1);
-#else
-    sha256_process_block(ctx, block);
-#endif
 }
