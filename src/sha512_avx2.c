@@ -1,13 +1,11 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+/* Copyright (c) 2025 Rhett Creighton */
+
 /*
  * sha512_avx2.c
  *
  * AVX2 parallel implementation of SHA-512 (4-way)
  */
-#ifndef SHA512_AVX2_LICENSE
-/* SPDX-License-Identifier: Apache-2.0 */
-/* Copyright (c) 2025 Rhett Creighton */
-#define SHA512_AVX2_LICENSE
-#endif
 #if defined(__AVX2__)
 #include "sha2.h"
 #include <immintrin.h>

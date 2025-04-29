@@ -1,13 +1,11 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+/* Copyright (c) 2025 Rhett Creighton */
+
 /*
  * sha256_avx512.c
  *
  * SHA-256 compression using AVX-512 SHA extensions (8-way parallel)
  */
-#ifndef SHA256_AVX512_LICENSE
-/* SPDX-License-Identifier: Apache-2.0 */
-/* Copyright (c) 2025 Rhett Creighton */
-#define SHA256_AVX512_LICENSE
-#endif
 #include "sha2.h"
 #if defined(__AVX512F__) && defined(__SHA__)
 #include <immintrin.h>

@@ -1,8 +1,5 @@
-#ifndef HASH_FUNCTION_LICENSE
 /* SPDX-License-Identifier: Apache-2.0 */
 /* Copyright (c) 2025 Rhett Creighton */
-#define HASH_FUNCTION_LICENSE
-#endif
 #include "sha2.h"
 #include <stdlib.h>
 #include <string.h>

@@ -1,8 +1,5 @@
-#ifndef SHA512_LICENSE
 /* SPDX-License-Identifier: Apache-2.0 */
 /* Copyright (c) 2025 Rhett Creighton */
-#define SHA512_LICENSE
-#endif
 #include "sha2.h"
 #include <string.h>
 #include <immintrin.h>

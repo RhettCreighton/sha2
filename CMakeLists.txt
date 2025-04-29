@@ -31,7 +31,6 @@ set(SHA2_SOURCES
     src/hash_function.c
     src/sha256_ni_transform.S
     src/sha512_avx512.c
-    src/sha2_hash50_parallel.c
     src/sha2_parallel.c
 )
 

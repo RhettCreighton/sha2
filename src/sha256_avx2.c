@@ -1,8 +1,5 @@
-#ifndef SHA256_AVX2_LICENSE
 /* SPDX-License-Identifier: Apache-2.0 */
 /* Copyright (c) 2025 Rhett Creighton */
-#define SHA256_AVX2_LICENSE
-#endif
 #ifdef __AVX2__
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-variable"

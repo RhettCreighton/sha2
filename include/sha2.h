@@ -1,3 +1,6 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+/* Copyright (c) 2025 Rhett Creighton */
+
 /**
  * @file sha2.h
  * @brief Implementation of SHA-2 hash functions with support for integration with sumcheck protocol
@@ -7,8 +10,6 @@
  * It includes a common interface for hash functions that can be used by other protocols.
  */
 
-/* SPDX-License-Identifier: Apache-2.0 */
-/* Copyright (c) 2025 Rhett Creighton */
 
 #ifndef SHA2_H
 #define SHA2_H

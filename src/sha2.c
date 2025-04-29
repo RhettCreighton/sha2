@@ -1,11 +1,7 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+/* Copyright (c) 2025 Rhett Creighton */
+
 #include <stddef.h>
-/* SPDX-License-Identifier: Apache-2.0 */
-/* Copyright (c) 2025 Rhett Creighton */
-#ifndef SHA2_LICENSE
-/* SPDX-License-Identifier: Apache-2.0 */
-/* Copyright (c) 2025 Rhett Creighton */
-#define SHA2_LICENSE
-#endif
 #include "sha2.h"
 #include <string.h>
 #include <stdlib.h>

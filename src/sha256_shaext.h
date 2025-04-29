@@ -1,6 +1,7 @@
-#ifndef SHA256_SHAEXT_H
 /* SPDX-License-Identifier: Apache-2.0 */
 /* Copyright (c) 2025 Rhett Creighton */
+
+#ifndef SHA256_SHAEXT_H
 #define SHA256_SHAEXT_H
 
 #include "sha2.h"

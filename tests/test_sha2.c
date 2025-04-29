@@ -1,8 +1,6 @@
-#ifndef TEST_SHA2_LICENSE
 /* SPDX-License-Identifier: Apache-2.0 */
 /* Copyright (c) 2025 Rhett Creighton */
-#define TEST_SHA2_LICENSE
-#endif
+
 #include "sha2.h"
 #include <stdio.h>
 #include <stdlib.h>
