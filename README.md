@@ -1,11 +1,11 @@
 # SHA2 Library
 
 ## Quick Full-Core Benchmark
-To immediately build and run the multi-threaded SHA-NI saturation benchmark on all cores:
+To immediately build and run the full-core small-message saturation benchmark:
 ```bash
 cmake -B build -S . -DCMAKE_BUILD_TYPE=Release && \
 cmake --build build -- -j && \
-build/bin/sha2_benchmark_mt
+build/bin/sha2_benchmark_many [msg_len [msgs_per_thread]]
 ```
 
 An implementation of the SHA-2 family of hash functions (SHA-224, SHA-256, SHA-384, SHA-512), specifically designed to be compatible with the sumcheck protocol for Fiat-Shamir transformations.
@@ -193,12 +193,12 @@ cmake --build build -- -j
 build/bin/sha2_benchmark
 ``` 
 
-## Examples
+## Example: Full-core small-message saturation benchmark
 
-See the `examples` directory for:
-
-- Basic hashing example
-- Integration with sumcheck protocol for Fiat-Shamir transformations
+Build and run the example to see peak SHA throughput on all cores:
+```bash
+build/bin/sha2_benchmark_many 55 256
+```
 
 ## API Overview
 

@@ -253,6 +253,44 @@ void sha256_process8_avx512(
 );
 #endif /* __SHA__ */
 #endif /* __AVX512F__ */
+/**
+ * @brief Compute N independent SHA-256 hashes of single-block messages in parallel.
+ *
+ * Auto-detects available CPU ISA, spawns one thread per core, and batches work
+ * across threads for maximum throughput. Only SHA2_256 is supported; each
+ * message must be exactly one 64-byte block. Outputs are 32-byte digests.
+ *
+ * @param type     Must be SHA2_256
+ * @param data     Pointer to contiguous input buffer (n * SHA256_BLOCK_SIZE bytes)
+ * @param digests  Pointer to contiguous output buffer (n * SHA256_DIGEST_SIZE bytes)
+ * @param n        Number of messages
+ * @return 0 on success, -1 on error
+ */
+int sha2_hash_parallel(sha2_hash_type type,
+                       const void *data,
+                       void *digests,
+                       size_t n);
+
+/**
+ * @brief Compute N independent SHA-256 hashes of messages of uniform length with maximum throughput.
+ *
+ * Automatically selects the best available parallel path. Supports:
+ *  - msg_len == SHA256_BLOCK_SIZE: multi-threaded single-block path using SHA-NI/SIMD.
+ *  - msg_len <= SHA256_BLOCK_SIZE - 9: in-place single-block padding then parallel path.
+ *  - otherwise: serial fallback to sha2_hash per message.
+ *
+ * @param type     Must be SHA2_256
+ * @param data     Input buffer of n messages, each msg_len bytes.
+ * @param msg_len  Length of each message in bytes.
+ * @param digests  Output buffer of n digests (SHA256_DIGEST_SIZE bytes each).
+ * @param n        Number of messages.
+ * @return 0 on success, -1 on error
+ */
+int sha2_hash_many(sha2_hash_type type,
+                   const void *data,
+                   size_t msg_len,
+                   void *digests,
+                   size_t n);
 #ifdef __cplusplus
 }
 #endif

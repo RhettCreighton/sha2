@@ -1,38 +1,9 @@
-# Ignore CMake build directory
-# Ignore primary CMake build directory
+# Ignore build directories
 build/
-# Ignore other out-of-tree build directories (build-opt, build-scalar, etc.)
-build-*/
+build_*/
 
-# Ignore editor and OS temporary files
-*.swp
-*~
-.#*
-*.bak
-*.orig
-
-# Ignore compiled object files and libraries
+# Ignore object files and local binaries
 *.o
-*.a
-*.so
-*.dylib
-
-# Ignore binaries
-bin/
-
-# Ignore coverage and CMake cache files
-coverage/
-CMakeFiles/
-CMakeCache.txt
-cmake_install.cmake
-Makefile
-*# Ignore temporary development artifacts
-tmp/
-
-# Ignore Visual Studio files
-*.vcxproj*
-*.sln
-
-# Ignore IntelliJ project files
-*.iml
-.idea/
+sha2_benchmark*
+sha2_hash_many_example
+test_parallel3.o

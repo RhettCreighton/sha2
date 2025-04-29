@@ -32,12 +32,14 @@ the library delivers both broad compatibility and world-class throughput for div
      ```
    - For release/benchmark:
      ```bash
+     # Wipe and recreate a single build directory
+     rm -rf build build_*        # remove any stale builds
      cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
      cmake --build build -- -j
-     # Single-threaded benchmarks:
-     build/bin/sha2_benchmark         # time-based API, SHA-NI single-block, AVX2, AVX-512
-     # Full-core SHA-NI saturation benchmark (use all cores):
-     build/bin/sha2_benchmark_mt      # multi-threaded SHA-NI multi-block
+     ```
+     ```bash
+     # Run the full-core small-message saturation benchmark
+     build/bin/sha2_benchmark_many    # one-build, one-run for peak MH/s
      ```
 
 3. Coding Guidelines
@@ -55,35 +57,22 @@ the library delivers both broad compatibility and world-class throughput for div
    - Runtime dispatch is managed by `__builtin_cpu_supports` checks.
 
 5. Benchmarks Summary
-   - AMD Ryzen 7 PRO 8840U (1-second run, 64-byte blocks):
-     * Scalar fallback: ~2.9M H/s
-     * SHA-NI single-block: ~25M H/s (≈99 cycles/hash)
-     * SHA-NI multi-block (batch 256): ~37M H/s (≈89 cycles/hash)
-     * AVX2-4way: ~16M H/s (≈186 cycles/hash)
-     * AVX512-8way: ~21M H/s (≈144 cycles/hash)
-     * Multi-threaded SHA-NI (one thread per core, batch 256): ~37M × #cores H/s (e.g., ~376M H/s on 16 cores)
+   - Many small messages (e.g., 55 B) via `sha2_benchmark_many`: ~385M H/s total on 16 cores
 
 6. Integration Options
    - Git submodule, CMake FetchContent, or `find_package(sha2)` after installation.
    - Pin to version `1.1.0` via tag or commit SHA for reproducibility.
 
-Always clean up temporary build artifacts (`build/`) before committing.
+Clean up temporary build artifacts before committing:
+```bash
+# Remove all build artifacts and untracked files (use with care)
+git clean -fdx
+```
+## Public API: sha2_hash_many
+The `sha2_hash_many` function provides a simple high-performance interface to compute `n` SHA-256 hashes of uniform-length messages:
+  - Prototype: `int sha2_hash_many(sha2_hash_type type, const void *data, size_t msg_len, void *digests, size_t n);`
+  - If `msg_len == SHA256_BLOCK_SIZE`, it uses the multi-threaded single-block parallel path (`sha2_hash_parallel`).
+  - If `msg_len <= SHA256_BLOCK_SIZE - 9`, messages are padded in-place to 64 bytes and then dispatched in parallel.
+  - Otherwise, falls back to serial `sha2_hash` per message.
 
-## Full-Core SHA-NI Integration Example
-To embed the multi-threaded SHA-NI benchmark in your own CMake project:
-
-1. In your `CMakeLists.txt`:
-   ```cmake
-   find_package(sha2 REQUIRED)
-   find_package(Threads REQUIRED)
-   add_executable(my_sha2_mt examples/sha2_benchmark_mt.c)
-   target_link_libraries(my_sha2_mt PRIVATE sha2 Threads::Threads)
-   ```
-
-2. Build and run to saturate all cores:
-   ```bash
-   cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
-   cmake --build build -- -j
-   build/bin/my_sha2_mt
-   ```
-This will drive the SHA-NI multi-block transform in one thread per core, achieving ~37M H/s per core (≈89 cycles/hash).
+Use this API for high-throughput hashing of many small messages without manual padding or threading.

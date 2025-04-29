@@ -31,6 +31,8 @@ set(SHA2_SOURCES
     src/hash_function.c
     src/sha256_ni_transform.S
     src/sha512_avx512.c
+    src/sha2_hash50_parallel.c
+    src/sha2_parallel.c
 )
 
 # Create library (static by default)
@@ -174,30 +176,8 @@ endif()
 
 # Optional: examples (disabled by default now)
 if(SHA2_BUILD_EXAMPLES)
-    # Simple hash example
-    add_executable(sha2_hash_example examples/hash_example.c)
-    target_link_libraries(sha2_hash_example sha2)
-    
-    # Fiat-Shamir example with sumcheck protocol
-    add_executable(sha2_fiat_shamir_example examples/fiat_shamir_example.c)
-    target_link_libraries(sha2_fiat_shamir_example sha2)
-    
-    # Benchmark: (deprecated) measure SHA-256 hashes per second
-    # (Use sha2_benchmark_mt for multi-threaded SHA-NI benchmark.)
-    #add_executable(sha2_benchmark examples/sha2_benchmark.c)
-    #target_link_libraries(sha2_benchmark sha2)
-    # Benchmark: measure SHA-512 hashes per second
-    add_executable(sha2_benchmark512 examples/sha2_benchmark512.c)
-    target_link_libraries(sha2_benchmark512 sha2)
-    
-    # Copy executables to bin/
-    set_target_properties(
-        sha2_hash_example sha2_fiat_shamir_example sha2_benchmark512
-        PROPERTIES
-        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
-    )
-    # Build multi-threaded SHA-NI benchmark
-    add_executable(sha2_benchmark_mt examples/sha2_benchmark_mt.c)
-    target_link_libraries(sha2_benchmark_mt PRIVATE sha2 Threads::Threads)
-    set_target_properties(sha2_benchmark_mt PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+    # Full-core small-message saturation benchmark
+    add_executable(sha2_benchmark_many examples/sha2_benchmark_many.c)
+    target_link_libraries(sha2_benchmark_many PRIVATE sha2 Threads::Threads)
+    set_target_properties(sha2_benchmark_many PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 endif()
