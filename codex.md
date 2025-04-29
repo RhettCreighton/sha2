@@ -68,3 +68,22 @@ the library delivers both broad compatibility and world-class throughput for div
    - Pin to version `1.1.0` via tag or commit SHA for reproducibility.
 
 Always clean up temporary build artifacts (`build/`) before committing.
+
+## Full-Core SHA-NI Integration Example
+To embed the multi-threaded SHA-NI benchmark in your own CMake project:
+
+1. In your `CMakeLists.txt`:
+   ```cmake
+   find_package(sha2 REQUIRED)
+   find_package(Threads REQUIRED)
+   add_executable(my_sha2_mt examples/sha2_benchmark_mt.c)
+   target_link_libraries(my_sha2_mt PRIVATE sha2 Threads::Threads)
+   ```
+
+2. Build and run to saturate all cores:
+   ```bash
+   cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
+   cmake --build build -- -j
+   build/bin/my_sha2_mt
+   ```
+This will drive the SHA-NI multi-block transform in one thread per core, achieving ~37M H/s per core (≈89 cycles/hash).

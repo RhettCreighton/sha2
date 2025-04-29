@@ -115,6 +115,31 @@ find_package(sha2 REQUIRED)
 target_link_libraries(your_target PRIVATE sha2)
 ```
 
+## Full-Core SHA-NI Integration Example
+To embed the multi-threaded SHA-NI multi-block benchmark in your own project, simply link against `sha2` and `Threads`, then copy or adapt the provided example:
+
+1. Add to your `CMakeLists.txt`:
+   ```cmake
+   find_package(sha2 REQUIRED)
+   find_package(Threads REQUIRED)
+   add_executable(my_sha2_mt my_sha2_mt.c)
+   target_link_libraries(my_sha2_mt PRIVATE sha2 Threads::Threads)
+   ```
+
+2. In `my_sha2_mt.c`, include the example code (from `examples/sha2_benchmark_mt.c`):
+   ```c
+   #include "sha2.h"
+   #include <pthread.h>
+   // ... copy the thread-based main() that calls sha256_ni_transform in loops ...
+   ```
+
+3. Build and run:
+   ```bash
+   cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
+   cmake --build build -- -j
+   build/bin/my_sha2_mt     # saturates all CPU cores with SHA-NI
+   ```
+
 ## Benchmarking Example
 
 Measure performance across block sizes and paths (scalar fallback, AVX2, SHA-NI) using a single build directory:
