@@ -3,7 +3,13 @@ build/
 build_*/
 
 # Ignore object files and local binaries
+# Ignore object files and local binaries
 *.o
+# Example binaries in project root (always ignore stray executables)
+sha2_app_small_batch
+sha2_app_fast_api
+sha2_benchmark_10M
+sha2_benchmark_10M_fast
 sha2_benchmark*
 sha2_hash_many_example
 test_parallel3.o

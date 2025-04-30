@@ -13,6 +13,83 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+// Expose SHA-NI block transform (defined in sha256_ni_transform.S)
+extern void sha256_ni_transform(uint32_t *digest, const void *data, uint64_t numBlocks);
+
+// Initial SHA-256 hash values
+static const uint32_t SHA256_H0_CONST[8] = {
+    0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
+    0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19
+};
+
+/**
+ * Thread argument for direct SHA-NI single-block path
+ */
+typedef struct {
+    const uint8_t *blocks;  // pointer to padded 64-byte blocks
+    uint8_t       *digests; // pointer to output digests buffer
+    size_t         start;   // starting block index
+    size_t         count;   // number of blocks to process
+} ni_thread_arg_t;
+
+/**
+ * Thread function: perform SHA-NI on each block and write digest
+ */
+static void* sha256_many_ni_thread(void *arg_) {
+    ni_thread_arg_t *arg = (ni_thread_arg_t*)arg_;
+    for (size_t i = 0; i < arg->count; i++) {
+        uint32_t state[8];
+        memcpy(state, SHA256_H0_CONST, sizeof(state));
+        const uint8_t *blk = arg->blocks + (arg->start + i) * SHA256_BLOCK_SIZE;
+        sha256_ni_transform(state, blk, 1);
+        uint8_t *out = arg->digests + (arg->start + i) * SHA256_DIGEST_SIZE;
+        for (int j = 0; j < 8; j++) {
+            out[j*4 + 0] = (uint8_t)(state[j] >> 24);
+            out[j*4 + 1] = (uint8_t)(state[j] >> 16);
+            out[j*4 + 2] = (uint8_t)(state[j] >> 8);
+            out[j*4 + 3] = (uint8_t)(state[j]      );
+        }
+    }
+    return NULL;
+}
+
+/**
+ * Fast path: batch SHA-256 on single 64-byte blocks using SHA-NI
+ * Data must be padded blocks (n × 64 bytes).
+ */
+static int sha256_hash_many_ni(const void *blocks_, void *digests_, size_t n) {
+    if (!blocks_ || !digests_) return -1;
+    const uint8_t *blocks = (const uint8_t*)blocks_;
+    uint8_t *digests = (uint8_t*)digests_;
+    size_t nthreads = sysconf(_SC_NPROCESSORS_ONLN);
+    if (nthreads < 1) nthreads = 1;
+    if (nthreads > n) nthreads = n;
+    pthread_t *threads = malloc(sizeof(pthread_t) * nthreads);
+    ni_thread_arg_t *args = malloc(sizeof(ni_thread_arg_t) * nthreads);
+    if (!threads || !args) {
+        free(threads);
+        free(args);
+        return -1;
+    }
+    size_t base = n / nthreads;
+    size_t rem  = n % nthreads;
+    size_t offset = 0;
+    for (size_t t = 0; t < nthreads; t++) {
+        size_t cnt = base + (t < rem ? 1 : 0);
+        args[t].blocks  = blocks;
+        args[t].digests = digests;
+        args[t].start   = offset;
+        args[t].count   = cnt;
+        pthread_create(&threads[t], NULL, sha256_many_ni_thread, &args[t]);
+        offset += cnt;
+    }
+    for (size_t t = 0; t < nthreads; t++) {
+        pthread_join(threads[t], NULL);
+    }
+    free(threads);
+    free(args);
+    return 0;
+}
 
 /* Thread argument for parallel hashing */
 typedef struct {
@@ -98,6 +175,10 @@ int sha2_hash_many(sha2_hash_type type,
     }
     /* Case 2: short messages fitting in one block with padding */
     if (msg_len <= SHA256_BLOCK_SIZE - 9) {
+        /*
+         * Single-block padding path: pad each message to 64 bytes
+         * then dispatch to the fastest per-block SHA-256 transform.
+         */
         size_t block_size = SHA256_BLOCK_SIZE;
         size_t total = n * block_size;
         uint8_t *blocks = malloc(total);
@@ -107,16 +188,23 @@ int sha2_hash_many(sha2_hash_type type,
         for (size_t i = 0; i < n; i++) {
             uint8_t *blk = blocks + i * block_size;
             memcpy(blk, in + i * msg_len, msg_len);
-            /* Append padding */
             blk[msg_len] = 0x80;
             size_t pad_zero = block_size - msg_len - 1 - 8;
             memset(blk + msg_len + 1, 0, pad_zero);
-            /* Append length in bits, big-endian */
             uint64_t bitlen = (uint64_t)msg_len * 8;
             for (int b = 0; b < 8; b++) {
                 blk[block_size - 8 + b] = (uint8_t)(bitlen >> (56 - 8 * b));
             }
         }
+        /* If SHA-NI is available, use direct multi-threaded SHA-NI path */
+#if defined(__SHA__)
+        if (type == SHA2_256) {
+            int ret = sha256_hash_many_ni(blocks, digests, n);
+            free(blocks);
+            return ret;
+        }
+#endif
+        /* Fallback: thread-based hash via generic path */
         int ret = sha2_hash_parallel(type, blocks, digests, n);
         free(blocks);
         return ret;

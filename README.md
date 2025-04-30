@@ -237,6 +237,30 @@ Build and run the example to see peak SHA throughput on all cores:
 build/bin/sha2_benchmark_many 55 256
 ```
 
+## Example: Application-level API for Small Messages
+
+If you have a batch of N messages (each ≤55 bytes), you can call the high-performance
+`sha256_hash_many` API to hash them in a single compression per message, automatically
+using SHA-NI and all cores:
+
+```bash
+# After enabling SHA-NI support in CMake ( -DSHA2_ENABLE_SHAEXT=ON )
+build/bin/sha2_app_fast_api 10000000 49
+```
+
+Sample output:
+```
+API SHA-256: hashed 10000000 msgs of 49 bytes in 0.0248 s → 400+ MH/s
+```
+
+This call internally:
+1. Pads each 49-byte message into a single 64-byte block
+2. Divides work across all logical cores
+3. Invokes the SHA-NI assembler transform per block
+4. Writes 32-byte digests to the output buffer
+
+No manual padding or threading required in your application.
+
 ## API Overview
 
 ```c

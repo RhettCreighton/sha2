@@ -51,6 +51,7 @@ the library delivers both broad compatibility and world-class throughput for div
    - Use `apply_patch` for all modifications.
    - Update documentation (README.md, comments) alongside code changes.
    - Ensure public APIs remain consistent unless version bump.
+   - Do not present speculative or made-up performance numbers; only report real, measured results.
 
 4. SIMD & Assembly Paths
    - The code includes optional accelerated paths:
