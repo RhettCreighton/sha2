@@ -177,19 +177,6 @@ endif()
 
 # Optional: examples (disabled by default now)
 if(SHA2_BUILD_EXAMPLES)
-    # Full-core small-message saturation benchmark
-    add_executable(sha2_benchmark_many examples/sha2_benchmark_many.c)
-    target_link_libraries(sha2_benchmark_many PRIVATE sha2 Threads::Threads)
-    set_target_properties(sha2_benchmark_many PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
-
-    # Benchmark 10M distinct random messages (<50 bytes) via sha256_hash_many
-    add_executable(sha2_benchmark_10M examples/sha2_benchmark_10M.c)
-    target_link_libraries(sha2_benchmark_10M PRIVATE sha2 Threads::Threads)
-    set_target_properties(sha2_benchmark_10M PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
-    # Fast SHA-NI direct block transform benchmark (10M messages)
-    add_executable(sha2_benchmark_10M_fast examples/sha2_benchmark_10M_fast.c)
-    target_link_libraries(sha2_benchmark_10M_fast PRIVATE sha2 Threads::Threads)
-    set_target_properties(sha2_benchmark_10M_fast PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
     # Application example: batch API for small messages (≤55 bytes)
     add_executable(sha2_app_small_batch examples/sha2_app_small_batch.c)
